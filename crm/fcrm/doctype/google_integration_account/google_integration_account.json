@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "autoname": "autoincrement",
+ "creation": "2025-08-08 13:50:06.359353",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "connection_details_section",
+  "user",
+  "access_token",
+  "refresh_token",
+  "last_synced",
+  "scopes",
+  "token_type",
+  "status",
+  "token_expiry"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "user",
+   "options": "User"
+  },
+  {
+   "fieldname": "access_token",
+   "fieldtype": "Small Text",
+   "label": "access token",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refresh_token",
+   "fieldtype": "Small Text",
+   "label": "refresh token",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_synced",
+   "fieldtype": "Datetime",
+   "label": "last synced"
+  },
+  {
+   "fieldname": "scopes",
+   "fieldtype": "Data",
+   "label": "scopes"
+  },
+  {
+   "fieldname": "token_type",
+   "fieldtype": "Data",
+   "label": "token type"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "status",
+   "options": "Not Synced\nSyncing...\nSynced"
+  },
+  {
+   "fieldname": "connection_details_section",
+   "fieldtype": "Section Break",
+   "label": "Connection Details",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token_expiry",
+   "fieldtype": "Datetime",
+   "label": "token expiry"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-14 18:20:38.499050",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "Google Integration Account",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "user"
+}
