@@ -13,7 +13,8 @@
   "scopes",
   "token_type",
   "status",
-  "token_expiry"
+  "token_expiry",
+  "google_account"
  ],
  "fields": [
   {
@@ -65,12 +66,17 @@
    "fieldname": "token_expiry",
    "fieldtype": "Datetime",
    "label": "token expiry"
+  },
+  {
+   "fieldname": "google_account",
+   "fieldtype": "Data",
+   "label": "google account"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-14 18:20:38.499050",
+ "modified": "2025-08-14 19:09:28.686442",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Google Integration Account",

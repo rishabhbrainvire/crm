@@ -18,7 +18,8 @@
   "watch_resource_id",
   "watch_expiration",
   "watch_status",
-  "created_on"
+  "created_on",
+  "watch_channel_token"
  ],
  "fields": [
   {
@@ -90,12 +91,17 @@
    "label": "user",
    "options": "User",
    "reqd": 1
+  },
+  {
+   "fieldname": "watch_channel_token",
+   "fieldtype": "Data",
+   "label": "watch channel token"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-14 18:15:23.812981",
+ "modified": "2025-08-14 20:01:39.481043",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "Google Calendar Account",

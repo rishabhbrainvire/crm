@@ -4,25 +4,15 @@ import datetime
 from datetime import datetime, timedelta
 import pytz
 from frappe.utils import get_datetime, now_datetime
-
-# def to_utc_naive(dt):
-#     # If it's not timezone-aware, assume Asia/Kolkata
-#     if dt.tzinfo is None:
-#         dt = pytz.timezone("Asia/Kolkata").localize(dt)
-#     # Convert to UTC
-#     dt_utc = dt.astimezone(pytz.UTC)
-#     # Return without tzinfo (naive datetime)
-#     return dt_utc.replace(tzinfo=None)
-
-# start_datetime = to_utc_naive(datetime(2024, 7, 15, 20, 30))
-
+import json
+import uuid
 
 class GoogleCalendarSync:
     TOKEN_URL = "https://oauth2.googleapis.com/token"
-    BASE_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    BASE_URL = "https://www.googleapis.com/calendar/v3/calendars"
     # WEBHOOK_ENDPOINT = "/api/method/crm.google_calendar.webhook"  Update this
-    TOKEN_DOCTYPE = "Google Workspace Integration Connection"
-
+    TOKEN_DOCTYPE = "Google Integration Account"
+    CALENDAR_DOCTYPE = "Google Calendar Account" 
     # Centralized status options
     STATUS_NOT_SYNCED = "Not Synced"
     STATUS_SYNCING_CALENDAR = "Syncing Calendar Events"
@@ -73,7 +63,6 @@ class GoogleCalendarSync:
         frappe.db.commit()
         return 
 
-
     def full_sync(self):
         self.set_sync_status(self.STATUS_SYNCING_CALENDAR)
         try:
@@ -88,44 +77,6 @@ class GoogleCalendarSync:
             self.save_events(self.STATUS_SYNCED)
             frappe.log(f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items ")
             return {"status":"sucess","message":f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items"}
-
-    # def get_events(self, calendar_id="primary", time_min=None, time_max=None):
-    #     """Fetch events from Google Calendar."""
-
-    #     headers = {"Authorization": f"Bearer {self.access_token}"}
-
-    #     params = {
-    #     "singleEvents": True,
-    #     "maxResults": 2500,
-    #     "eventTypes":"default",
-    #     "showDeleted":True
-    #     }
-
-    #     events = []
-    #     sync_token = None
-
-    #     while True:
-    #         response = requests.get(self.BASE_URL, headers=headers, params=params)
-    #         response = response.json()
-
-    #         paged_events = response.get("items", [])
-    #         events.extend(paged_events)
-
-    #         if "nextPageToken" in response:
-    #             params["pageToken"] = response["nextPageToken"]
-    #             print("found page token")
-    #         else:
-    #             print("finding page token")
-    #             print(response.get("nextSyncToken"))
-    #             sync_token = response.get("nextSyncToken")  # Only here in final page
-    #             break
-
-    #     # Save sync token for incremental sync
-    #     if sync_token:
-    #         print("got syncedtoken")
-    #         self.set_sync_token(sync_token=sync_token)
-
-    #     return events
 
     def get_events(self, calendar_id="primary"):
         """Sync Google Calendar events. Works for first-time and incremental sync."""
@@ -219,6 +170,53 @@ class GoogleCalendarSync:
         except Exception as err:
             return (err)
         return True
+
+    def register_watch(self, calendar_id: str = "primary", ) -> dict:
+        """Create a watch channel for a user's calendar and store channel info on User."""
+
+        headers = {
+            "Authorization": f"Bearer {self.auth.access_token}",
+            "Content-Type": "application/json"
+        }
+
+        # Unique channel id per user (or per calendar if you support many)
+        channel_id = str(uuid.uuid4())
+
+        # Optional per-user secret echoed by Google in X-Goog-Channel-Token for verification
+        channel_token = frappe.db.get_value("User", self.user, "google_watch_channel_token") or str(uuid.uuid4())
+
+        payload = {
+            "id": channel_id,
+            "type": "web_hook",
+            "address": f"{frappe.utils.get_url()}/api/method/crm.api.google_workspace.api.google_calendar_notify",
+            # Token is echoed back in the webhook headers (X-Goog-Channel-Token)
+            "token": channel_token,
+            # NOTE: Calendar often ignores custom TTL; rely on returned 'expiration'
+            # "params": {"ttl": "604800"}  # up to 7 days; ignored by Calendar in many cases
+        }
+
+        url = f"{self.BASE_URL}/{calendar_id}/events/watch"
+        r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
+        resp = r.json()
+
+        if r.status_code >= 300 or "resourceId" not in resp:
+            frappe.throw(f"Failed to start watch: {resp}")
+
+        # Save channel info
+        expiration_ms = resp.get("expiration")  # milliseconds since epoch (string)
+        expiration_dt = None
+        if expiration_ms:
+            expiration_dt = datetime.fromtimestamp(int(expiration_ms) / 1000.0)
+
+        frappe.db.set_value(GoogleCalendarSync.CALENDAR_DOCTYPE, self.user,{
+            "watch_channel_id": resp["id"],
+            "watch_resource_id": resp["resourceId"],
+            "watch_expiration": expiration_dt,
+            "watch_channel_token": channel_token,
+            "created_on":now_datetime
+        })
+        frappe.db.commit()
+        return resp
 
     def _parse_datetime(self, date_dict):
         """
