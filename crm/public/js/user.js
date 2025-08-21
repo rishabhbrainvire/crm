@@ -1,7 +1,7 @@
 frappe.ui.form.on('User', {
     sync_workspace: function(frm) {
         frappe.call({
-            method: "crm.api.google_workspace.integrations.run_full_sync",
+            method: "crm.api.google_workspace.integrations.initiate_google_workspace_sync",
             args: { user: frappe.session.user },
             callback: function(r) {
                 if (r.message) {

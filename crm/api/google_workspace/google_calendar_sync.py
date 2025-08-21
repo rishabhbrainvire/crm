@@ -169,13 +169,14 @@ class GoogleCalendarSync:
             frappe.db.commit()
         except Exception as err:
             return (err)
+        self.set_sync_status(status=self.STATUS_SYNCED)
         return True
 
     def register_watch(self, calendar_id: str = "primary", ) -> dict:
         """Create a watch channel for a user's calendar and store channel info on User."""
 
         headers = {
-            "Authorization": f"Bearer {self.auth.access_token}",
+            "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json"
         }
 
@@ -183,7 +184,7 @@ class GoogleCalendarSync:
         channel_id = str(uuid.uuid4())
 
         # Optional per-user secret echoed by Google in X-Goog-Channel-Token for verification
-        channel_token = frappe.db.get_value("User", self.user, "google_watch_channel_token") or str(uuid.uuid4())
+        channel_token = frappe.db.get_value(self.CALENDAR_DOCTYPE, self.user, "watch_channel_token") or str(uuid.uuid4())
 
         payload = {
             "id": channel_id,

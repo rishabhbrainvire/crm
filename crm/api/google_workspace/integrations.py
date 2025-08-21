@@ -6,7 +6,7 @@ from .google_calendar_sync import GoogleCalendarSync
 import frappe
 
 @frappe.whitelist()
-def turn_on_sync(user):
+def initiate_google_workspace_sync(user):
     try:
         integration = GoogleWorkspaceIntegration(user)
         integration.initial_setup()
