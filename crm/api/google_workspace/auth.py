@@ -37,13 +37,13 @@ def google_oauth_callback(**kwargs):
 
 class GoogleAuth:
     """Handles Google OAuth tokens and credentials for a given user."""
-
+    DOMAIN_URL = "https://frappecrm.brainvire.net"
     TOKEN_DOCTYPE = "Google Integration Account"
-    GOOGLE_CLIENT_ID = frappe.conf.google_client_id
-    GOOGLE_CLIENT_SECRET = frappe.conf.google_client_secret
+    GOOGLE_CLIENT_ID = "replace"
+    GOOGLE_CLIENT_SECRET = "replace"
     GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
-    REDIRECT_URI = "http://localhost:8002/api/method/crm.api.google_workspace.auth.google_oauth_callback"
-    SCOPES = "https://www.googleapis.com/auth/calendar.readonly"
+    REDIRECT_URI = f"{DOMAIN_URL}/api/method/crm.api.google_workspace.auth.google_oauth_callback"
+    SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly"
 
     def __init__(self, user):
         self.user = user
@@ -52,7 +52,11 @@ class GoogleAuth:
             frappe.throw("Google Client ID and Client Secret not found")
 
         # Load user-specific tokens
-        token_doc = frappe.get_doc(self.TOKEN_DOCTYPE, {"user": user})
+        token_name = frappe.db.get_value(self.TOKEN_DOCTYPE, {"user": user})
+        if not token_name:
+            frappe.throw(f"Please Authorize Google Oauth")
+
+        token_doc = frappe.get_doc(self.TOKEN_DOCTYPE, token_name)
         self._access_token = token_doc.access_token
         self.refresh_token = token_doc.refresh_token
         self.expiry = token_doc.token_expiry
@@ -204,7 +208,7 @@ class GoogleAuth:
 
 
         # Update status in User
-        frappe.db.set_value("User", frappe.session.user, "sync_calendar_status", "Synced")
+        frappe.db.set_value("User", frappe.session.user, "sync_workspace_status", "Synced")
         frappe.db.commit()
 
         frappe.local.response["type"] = "redirect"

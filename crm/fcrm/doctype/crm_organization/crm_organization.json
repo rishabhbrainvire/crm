@@ -17,7 +17,10 @@
   "website",
   "territory",
   "industry",
-  "address"
+  "address",
+  "workspace_items_tab",
+  "emails",
+  "events"
  ],
  "fields": [
   {
@@ -81,12 +84,29 @@
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
+  },
+  {
+   "fieldname": "workspace_items_tab",
+   "fieldtype": "Tab Break",
+   "label": "Workspace Items"
+  },
+  {
+   "fieldname": "emails",
+   "fieldtype": "Table",
+   "label": "Emails",
+   "options": "Workspace Email Table"
+  },
+  {
+   "fieldname": "events",
+   "fieldtype": "Table",
+   "label": "Events ",
+   "options": "Workspace Event Table"
   }
  ],
  "image_field": "organization_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-15 11:40:12.175598",
+ "modified": "2025-08-22 05:17:15.871723",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Organization",

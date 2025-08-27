@@ -38,8 +38,17 @@ class GoogleCalendarSync:
         self.user = user
         self.access_token = access_token
 
-        token_doc = frappe.get_doc(self.TOKEN_DOCTYPE, {"user": self.user})
-        self.sync_token = token_doc.calendar_sync_token 
+        user_ca = frappe.db.exists(self.CALENDAR_DOCTYPE, {"user": self.user})
+        if not user_ca:
+            token_doc = frappe.get_doc({
+                "doctype": self.CALENDAR_DOCTYPE,
+                "user": self.user,
+            })
+            token_doc.insert()
+            frappe.db.commit()
+
+        user_ca = frappe.get_doc(self.CALENDAR_DOCTYPE, {"user": self.user})
+        self.sync_token = user_ca.sync_token 
         
     def set_sync_status(self, status: str):
         """
@@ -57,15 +66,20 @@ class GoogleCalendarSync:
         return 
 
     def set_sync_token(self,sync_token):
-        token_doc = frappe.get_doc(self.TOKEN_DOCTYPE, {"user": self.user})
-        token_doc.calendar_sync_token = sync_token
-        token_doc.save(ignore_permissions=True)
-        frappe.db.commit()
-        return 
+        try:
+            token_doc = frappe.get_doc(self.CALENDAR_DOCTYPE, {"user": self.user})
+            token_doc.sync_token = sync_token
+            token_doc.save(ignore_permissions=True)
+            frappe.db.commit()
+            return
+        except Exception as error:
+            frappe.log_error(str(error))
+            print(str(error))
 
-    def full_sync(self):
+    def sync_events(self): #tbd - better name
         self.set_sync_status(self.STATUS_SYNCING_CALENDAR)
         try:
+            frappe.log(f"Workspace Calendar Sync Starting ... ")
             events = self.get_events()
             self.save_events(events) 
         except Exception as error:
@@ -74,150 +88,164 @@ class GoogleCalendarSync:
             self.set_sync_status(self.STATUS_FAILED)
             return 
         else:
-            self.save_events(self.STATUS_SYNCED)
+            self.set_sync_status(self.STATUS_SYNCED)
             frappe.log(f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items ")
             return {"status":"sucess","message":f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items"}
-
+    
     def get_events(self, calendar_id="primary"):
         """Sync Google Calendar events. Works for first-time and incremental sync."""
-        headers = {"Authorization": f"Bearer {self.access_token}"}
-        url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
+        try:
+            headers = {"Authorization": f"Bearer {self.access_token}"}
+            url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
 
-        events = []
-        params = {"maxResults": 2500}
+            events = []
+            params = {"maxResults": 2500}
 
-        # Check if we already have a stored sync token
-        last_sync_token = self.sync_token
+            # Check if we already have a stored sync token
+            last_sync_token = self.sync_token
 
-        if last_sync_token:
-            # Incremental sync (Google only returns changes)
-            params["syncToken"] = last_sync_token
-            print(f"🔄 Incremental sync with token: {last_sync_token}")
-        else:
-            # First-time sync — must be full list, no filters
-            params["singleEvents"] = True
-            params["showDeleted"] = True
-            print("🌱 First-time sync (fetching all events)")
-
-        while True:
-            res = requests.get(url, headers=headers, params=params)
-            data = res.json()
-
-            # Handle expired/invalid sync token → must re-sync full
-            if data.get("error", {}).get("reason") == "fullSyncRequired":
-                print("⚠ Sync token expired — doing full sync again")
-                self.set_sync_token(None)  # Clear stored token
-                return self.sync_events(calendar_id)
-
-            events.extend(data.get("items", []))
-
-            if "nextPageToken" in data:
-                params["pageToken"] = data["nextPageToken"]
+            if last_sync_token:
+                # Incremental sync (Google only returns changes)
+                params["syncToken"] = last_sync_token
+                print(f"🔄 Incremental sync with token: {last_sync_token}")
             else:
-                next_token = data.get("nextSyncToken")
-                if next_token:
-                    self.set_sync_token(next_token)
-                    print(f"✅ Saved new sync token: {next_token}")
-                break
+                # First-time sync — must be full list, no filters
+                params["singleEvents"] = True
+                params["showDeleted"] = True
+                params["singleEvents"]=True
+                print("🌱 First-time sync (fetching all events)")
 
-        return events
+            while True:
+                res = requests.get(url, headers=headers, params=params)
+                data = res.json()
+                # Handle expired/invalid sync token → must re-sync full
+                if data.get("error", {}).get("reason") == "fullSyncRequired":
+                    print("⚠ Sync token expired — doing full sync again")
+                    self.set_sync_token(None)  # Clear stored token
+                    return False
+                events.extend(data.get("items", []))
+                if "nextPageToken" in data:
+                    params["pageToken"] = data["nextPageToken"]
+                else:
+                    next_token = data.get("nextSyncToken")
+                    if next_token:
+                        self.set_sync_token(next_token)
+                        print(f"✅ Saved new sync token: {next_token}")
+                    break
+
+            return events
+        except Exception as error:
+            frappe.throw(str(error))
+            frappe.log_error(str(error))
         
     def save_events(self, events):
         """
         Save Google Calendar events into the `Google Calendar Events` DocType.
         """
-        try:
+        try:            
             for ev in events:
-                google_event_id = ev.get("id")
-                existing_event = frappe.get_all(
-                    "Google Calendar Events",
-                    filters={"google_event_id": google_event_id, "user": self.user},
-                    limit=1
-                )
+                if ev.get("eventType") == "default": # TBD - handle this properly later
+                    google_event_id = ev.get("id")
+                    existing_event = frappe.get_all(
+                        "Google Calendar Events",
+                        filters={"google_event_id": google_event_id, "user": self.user},
+                        limit=1
+                    )
+                    doc = None
+                    if existing_event:
+                        doc = frappe.get_doc("Google Calendar Events", existing_event[0].name)
+                        print(doc)
+                        print("fullevent",ev)
+                    else:
+                        doc = frappe.new_doc("Google Calendar Events")
+                        doc.user = self.user
+                        doc.google_event_id = google_event_id
 
-                doc = None
-                if existing_event:
-                    doc = frappe.get_doc("Google Calendar Events", existing_event[0].name)
-                else:
-                    doc = frappe.new_doc("Google Calendar Events")
-                    doc.user = self.user
-                    doc.google_event_id = google_event_id
+                    # Map fields
+                    doc.summary = ev.get("summary")
+                    doc.description = ev.get("description")
+                    doc.start_datetime = self._parse_datetime(ev.get("start"))
+                    doc.end_datetime = self._parse_datetime(ev.get("end"))
+                    doc.all_day_event = self._is_all_day(ev.get("start"))
+                    doc.status = ev.get("status", "Confirmed").capitalize()
+                    doc.location = ev.get("location")
+                    doc.created_on = self._parse_google_datetime(ev.get("created"))
+                    doc.updated_on = self._parse_google_datetime(ev.get("updated"))
+                    doc.etag = ev.get("etag")
+                    doc.recurring_event_id = ev.get("recurringEventId")
+                    print(doc.summary,'summary')
+                    # Handle attendees table
+                    doc.attendees = []
 
-                # Map fields
-                doc.summary = ev.get("summary")
-                doc.description = ev.get("description")
-                doc.start_datetime = self._parse_datetime(ev.get("start"))
-                doc.end_datetime = self._parse_datetime(ev.get("end"))
-                doc.all_day_event = self._is_all_day(ev.get("start"))
-                doc.status = ev.get("status", "Confirmed").capitalize()
-                doc.location = ev.get("location")
-                doc.created_on = self._parse_google_datetime(ev.get("created"))
-                doc.updated_on = self._parse_google_datetime(ev.get("updated"))
-                doc.etag = ev.get("etag")
-                doc.recurring_event_id = ev.get("recurringEventId")
-
-                # Handle attendees table
-                doc.attendees = []
-                for attendee in ev.get("attendees", []):
-                    doc.append("attendees", {
-                        "email": attendee.get("email"),
-                        "response_status": attendee.get("responseStatus"),
-                        "display_name": attendee.get("displayName")
-                    })
-
-                doc.save(ignore_permissions=True)
+                    attendees = ev.get("attendees", [])
+                    if attendees:
+                        for attendee in attendees:
+                            email = attendee.get("email")
+                            doc.append("attendees", {
+                                "email": email,
+                                "response_status": attendee.get("responseStatus"),
+                                "display_name": attendee.get("displayName"),
+                                "self": 1 if attendee.get("self") else 0 
+                            })
+                    doc.save(ignore_permissions=True)
             frappe.db.commit()
         except Exception as err:
-            return (err)
-        self.set_sync_status(status=self.STATUS_SYNCED)
-        return True
+            frappe.throw(str(err))
+            self.set_sync_status(status=self.STATUS_FAILED)
+        else:
+            self.set_sync_status(status=self.STATUS_SYNCED)
+            return True
 
     def register_watch(self, calendar_id: str = "primary", ) -> dict:
-        """Create a watch channel for a user's calendar and store channel info on User."""
+        try:
+            """Create a watch channel for a user's calendar and store channel info on User."""
 
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json"
-        }
+            headers = {
+                "Authorization": f"Bearer {self.access_token}",
+                "Content-Type": "application/json"
+            }
 
-        # Unique channel id per user (or per calendar if you support many)
-        channel_id = str(uuid.uuid4())
+            # Unique channel id per user (or per calendar if you support many)
+            channel_id = str(uuid.uuid4())
 
-        # Optional per-user secret echoed by Google in X-Goog-Channel-Token for verification
-        channel_token = frappe.db.get_value(self.CALENDAR_DOCTYPE, self.user, "watch_channel_token") or str(uuid.uuid4())
+            # Optional per-user secret echoed by Google in X-Goog-Channel-Token for verification
+            channel_token = frappe.db.get_value(self.CALENDAR_DOCTYPE, self.user, "watch_channel_token") or str(uuid.uuid4())
 
-        payload = {
-            "id": channel_id,
-            "type": "web_hook",
-            "address": f"{frappe.utils.get_url()}/api/method/crm.api.google_workspace.api.google_calendar_notify",
-            # Token is echoed back in the webhook headers (X-Goog-Channel-Token)
-            "token": channel_token,
-            # NOTE: Calendar often ignores custom TTL; rely on returned 'expiration'
-            # "params": {"ttl": "604800"}  # up to 7 days; ignored by Calendar in many cases
-        }
+            payload = {
+                "id": channel_id,
+                "type": "web_hook",
+                "address": f"{frappe.utils.get_url()}/api/method/crm.api.google_workspace.api.google_calendar_notify",
+                # Token is echoed back in the webhook headers (X-Goog-Channel-Token)
+                "token": channel_token,
+                # NOTE: Calendar often ignores custom TTL; rely on returned 'expiration'
+                # "params": {"ttl": "604800"}  # up to 7 days; ignored by Calendar in many cases
+            }
 
-        url = f"{self.BASE_URL}/{calendar_id}/events/watch"
-        r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
-        resp = r.json()
+            url = f"{self.BASE_URL}/{calendar_id}/events/watch"
+            r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
+            print(r.status_code,r.content)
+            resp = r.json()
 
-        if r.status_code >= 300 or "resourceId" not in resp:
-            frappe.throw(f"Failed to start watch: {resp}")
+            if r.status_code >= 300 or "resourceId" not in resp:
+                frappe.throw(f"Failed to start watch: {resp}")
 
-        # Save channel info
-        expiration_ms = resp.get("expiration")  # milliseconds since epoch (string)
-        expiration_dt = None
-        if expiration_ms:
-            expiration_dt = datetime.fromtimestamp(int(expiration_ms) / 1000.0)
+            # Save channel info
+            expiration_ms = resp.get("expiration")  # milliseconds since epoch (string)
+            expiration_dt = None
+            if expiration_ms:
+                expiration_dt = datetime.fromtimestamp(int(expiration_ms) / 1000.0)
 
-        frappe.db.set_value(GoogleCalendarSync.CALENDAR_DOCTYPE, self.user,{
-            "watch_channel_id": resp["id"],
-            "watch_resource_id": resp["resourceId"],
-            "watch_expiration": expiration_dt,
-            "watch_channel_token": channel_token,
-            "created_on":now_datetime
-        })
-        frappe.db.commit()
-        return resp
+            doc = frappe.get_doc(self.CALENDAR_DOCTYPE,{"user": self.user})
+            doc.watch_channel_id = resp["id"]
+            doc.watch_resource_id = resp["resourceId"]
+            doc.watch_expiration = expiration_dt
+            doc.watch_channel_token = channel_token
+            # doc.created_on = now_datetime  # uncomment if field exists
+            doc.save(ignore_permissions=True)
+            frappe.db.commit()
+            return True
+        except Exception as error:
+            frappe.throw(str(error))
 
     def _parse_datetime(self, date_dict):
         """
@@ -256,9 +284,11 @@ class GoogleCalendarSync:
         return bool(dt_obj and "date" in dt_obj)
 
     @staticmethod
-    def _run_incremental_sync(self,user: str):
+    def _run_incremental_sync(user: str,access_token):
+        sync_instance = GoogleCalendarSync(user,access_token)
+
         try:
-            processed = self.get_events(user, "primary")
+            processed = GoogleCalendarSync.get_events(user, "primary")
             frappe.logger("google_calendar").info(f"Incremental sync for {user}: {processed} items")
         except Exception:
             frappe.log_error(frappe.get_traceback(), f"Google Calendar incremental sync failed for {user}")

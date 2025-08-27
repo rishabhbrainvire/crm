@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "autoincrement",
- "creation": "2025-08-14 18:02:03.677506",
+ "creation": "2025-08-24 17:25:09.721432",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -70,14 +70,13 @@
   },
   {
    "fieldname": "watch_expiration",
-   "fieldtype": "Datetime",
+   "fieldtype": "Int",
    "label": "watch expiration"
   },
   {
    "fieldname": "watch_status",
-   "fieldtype": "Select",
-   "label": "watch status",
-   "options": "active\nexpired\nrevoked"
+   "fieldtype": "Data",
+   "label": "watch status"
   },
   {
    "fieldname": "created_on",
@@ -101,8 +100,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-14 20:01:39.481043",
- "modified_by": "Administrator",
+ "modified": "2025-08-24 21:19:38.831788",
+ "modified_by": "rishabh.sharma@brainvire.com",
  "module": "FCRM",
  "name": "Google Calendar Account",
  "naming_rule": "Autoincrement",

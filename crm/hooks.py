@@ -164,7 +164,15 @@ doc_events = {
 		"before_validate": ["crm.api.demo.validate_user"],
 		"validate_reset_password": ["crm.api.demo.validate_reset_password"],
 	},
+    
+    "Google Calendar Events": {
+        "after_insert": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
+        "on_update": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
+        "after_save": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
+    }
 }
+
+
 
 # Scheduled Tasks
 # ---------------
@@ -172,8 +180,8 @@ doc_events = {
 scheduler_events = {
     # Renew watches hourly (cheap), fallback poll every 10 min
     "cron": {
-        "0 * * * *": ["crm.calendar_jobs.renew_all_watches"],  # hourly
-        "*/10 * * * *": ["crm.calendar_jobs.fallback_polling"] # every 10 min
+        # "0 * * * *": ["crm.calendar_jobs.renew_all_watches"],  # hourly
+        # "*/10 * * * *": ["crm.calendar_jobs.fallback_polling"] # every 10 min
     }
 }
 
