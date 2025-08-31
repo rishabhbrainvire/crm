@@ -1,19 +1,5 @@
 import frappe
 
-
-@frappe.whitelist()
-def add_existing_users(users, role="Sales User"):
-	"""
-	Add existing users to the CRM by assigning them a role (Sales User or Sales Manager).
-	:param users: List of user names to be added
-	"""
-	frappe.only_for(["System Manager", "Sales Manager"])
-	users = frappe.parse_json(users)
-
-	for user in users:
-		add_user(user, role)
-
-
 @frappe.whitelist()
 def update_user_role(user, new_role):
 	"""
@@ -82,3 +68,16 @@ def update_module_in_user(user, module):
 
 	if block_modules:
 		user.set("block_modules", block_modules)
+
+def assign_default_role_profile(doc, method):
+    """Assign default Role Profile to a new User"""
+    exec_role_profile = "Exec Role"
+
+    # if not doc.role_profile_name:
+    #     doc.role_profile_name = exec_role_profile
+
+    #     # This applies roles from Role Profile into User Roles child table
+    #     doc.apply_role_profile()
+
+    #     # Save the user doc
+    #     doc.save(ignore_permissions=True)

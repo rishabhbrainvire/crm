@@ -81,17 +81,3 @@ def google_calendar_notify():
     except Exception as error:
         frappe.throw(str(error))
         print(str(error))
-
-
-@frappe.whitelist(allow_guest=True)
-def gmail_watch_callback():
-    """
-    This is the endpoint Gmail will call when there is a new message.
-    We can enqueue a background job to sync emails incrementally.
-    """
-    envelope = frappe.local.request.headers
-    user = frappe.get_doc("User", envelope.get("X-Goog-Resource-Id"))
-    inc_google_workspace_mail_sync(user)
-
-    # You could also use enqueue to process in background
-    return {"status": "ok"}

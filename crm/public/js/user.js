@@ -21,13 +21,13 @@ frappe.ui.form.on('User', {
                 callback: function(r) {
                     if (r.message && r.message.connected) {
                         frm.set_df_property(
-                            "authorize_via_google_oauth",
+                            "authorize_via_google_auth",
                             "label",
                             "Re-Authorize your Google Account"
                         );
                     } else {
                         frm.set_df_property(
-                            "authorize_via_google_oauth",
+                            "authorize_via_google_auth",
                             "label",
                             "Authorize your Google Account"
                         );
@@ -37,7 +37,7 @@ frappe.ui.form.on('User', {
         }
     },
 
-    authorize_via_google_oauth(frm) {
+    authorize_via_google_auth(frm) {
         frappe.call({
             method: "crm.api.google_workspace.auth.initiate_google_auth",
             args: { user: frappe.session.user },

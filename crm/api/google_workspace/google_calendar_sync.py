@@ -50,20 +50,20 @@ class GoogleCalendarSync:
         user_ca = frappe.get_doc(self.CALENDAR_DOCTYPE, {"user": self.user})
         self.sync_token = user_ca.sync_token 
         
-    def set_sync_status(self, status: str):
-        """
-        Update the user's workspace sync status.
+    # def set_sync_status(self, status: str):
+    #     """
+    #     Update the user's workspace sync status.
 
-        :param status: One of the SYNC_STATUS_CHOICES values.
-        """
-        if status not in self.SYNC_STATUS_CHOICES:
-            frappe.throw(f"Invalid sync status: {status}")
+    #     :param status: One of the SYNC_STATUS_CHOICES values.
+    #     """
+    #     if status not in self.SYNC_STATUS_CHOICES:
+    #         frappe.throw(f"Invalid sync status: {status}")
 
-        doc = frappe.get_doc("User", self.user)
-        doc.sync_workspace_status = status
-        doc.save(ignore_permissions=True)
-        frappe.db.commit()
-        return 
+    #     doc = frappe.get_doc("User", self.user)
+    #     doc.sync_workspace_status = status
+    #     doc.save(ignore_permissions=True)
+    #     frappe.db.commit()
+    #     return 
 
     def set_sync_token(self,sync_token):
         try:
@@ -77,7 +77,7 @@ class GoogleCalendarSync:
             print(str(error))
 
     def sync_events(self): #tbd - better name
-        self.set_sync_status(self.STATUS_SYNCING_CALENDAR)
+        # self.set_sync_status(self.STATUS_SYNCING_CALENDAR)
         try:
             frappe.log(f"Workspace Calendar Sync Starting ... ")
             events = self.get_events()
@@ -85,10 +85,10 @@ class GoogleCalendarSync:
         except Exception as error:
             frappe.throw("Calendar Full Sync Failed")
             frappe.frappe.log_error(title="Calendar Full Sync Failed", message=f"{str(error)}\n\nTraceback:\n{frappe.get_traceback()}")
-            self.set_sync_status(self.STATUS_FAILED)
+            # self.set_sync_status(self.STATUS_FAILED)
             return 
         else:
-            self.set_sync_status(self.STATUS_SYNCED)
+            # self.set_sync_status(self.STATUS_SYNCED)
             frappe.log(f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items ")
             return {"status":"sucess","message":f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items"}
     
@@ -191,9 +191,9 @@ class GoogleCalendarSync:
             frappe.db.commit()
         except Exception as err:
             frappe.throw(str(err))
-            self.set_sync_status(status=self.STATUS_FAILED)
+            # self.set_sync_status(status=self.STATUS_FAILED)
         else:
-            self.set_sync_status(status=self.STATUS_SYNCED)
+            # self.set_sync_status(status=self.STATUS_SYNCED)
             return True
 
     def register_watch(self, calendar_id: str = "primary", ) -> dict:
@@ -243,6 +243,7 @@ class GoogleCalendarSync:
             # doc.created_on = now_datetime  # uncomment if field exists
             doc.save(ignore_permissions=True)
             frappe.db.commit()
+            print("Calendar Watch Created Succesfully")
             return True
         except Exception as error:
             frappe.throw(str(error))
@@ -292,3 +293,9 @@ class GoogleCalendarSync:
             frappe.logger("google_calendar").info(f"Incremental sync for {user}: {processed} items")
         except Exception:
             frappe.log_error(frappe.get_traceback(), f"Google Calendar incremental sync failed for {user}")
+    
+
+from .workspace_items import process_workspace_item
+
+def calendar_event_handler_enqueue(doc,method):
+    process_workspace_item(docname=doc.name,event_doc=True)

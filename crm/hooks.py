@@ -161,14 +161,15 @@ doc_events = {
 		],
 	},
 	"User": {
+        "after_insert": "crm.api.user.assign_default_role_profile",
 		"before_validate": ["crm.api.demo.validate_user"],
 		"validate_reset_password": ["crm.api.demo.validate_reset_password"],
 	},
     
     "Google Calendar Events": {
-        "after_insert": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
-        "on_update": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
-        "after_save": "crm.api.google_workspace.integrations.calendar_event_handler_enqueue",
+        "after_insert": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
+        "on_update": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
+        "after_save": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
     }
 }
 

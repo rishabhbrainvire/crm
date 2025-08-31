@@ -262,37 +262,6 @@ class GmailSync:
         print("exiting the save logic now")
         return doc
 
-
-    # ------------------------------
-    # Register Gmail watch
-    # ------------------------------
-    def register_watch(self, topic_name, expiration=None):
-        print('Attempting to register watch')
-        payload = {
-            "labelIds": self.label_ids,
-            "topicName": topic_name
-        }
-        if expiration:
-            payload["expiration"] = expiration
-
-        res = requests.post(self.WATCH_URL, headers=self.headers, json=payload)
-        data = res.json()
-        print(data.status,data)
-        if "error" in data:
-            frappe.throw(f"Gmail Watch registration failed: {data['error']}")
-
-        # Save watch details
-        self.doc.watch_channel_id = data.get("channelId")
-        self.doc.watch_resource_id = data.get("resourceId")
-        self.doc.watch_expiration = datetime.fromtimestamp(data.get("expiration", 0)/1000) if data.get("expiration") else None
-        self.doc.watch_topic = topic_name
-        self.doc.save(ignore_permissions=True)
-        frappe.db.commit()
-        print("Watch registered and saved.")
-        return data
-
-
-
     # ------------------------------
     # Full sync method
     # ------------------------------

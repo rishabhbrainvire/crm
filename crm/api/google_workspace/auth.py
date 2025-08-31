@@ -39,8 +39,8 @@ class GoogleAuth:
     """Handles Google OAuth tokens and credentials for a given user."""
     DOMAIN_URL = "https://frappecrm.brainvire.net"
     TOKEN_DOCTYPE = "Google Integration Account"
-    GOOGLE_CLIENT_ID = "replace"
-    GOOGLE_CLIENT_SECRET = "replace"
+    GOOGLE_CLIENT_ID = frappe.conf.get("google_client_id")
+    GOOGLE_CLIENT_SECRET = frappe.conf.get("google_client_secret")
     GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
     REDIRECT_URI = f"{DOMAIN_URL}/api/method/crm.api.google_workspace.auth.google_oauth_callback"
     SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly"
@@ -208,7 +208,6 @@ class GoogleAuth:
 
 
         # Update status in User
-        frappe.db.set_value("User", frappe.session.user, "sync_workspace_status", "Synced")
         frappe.db.commit()
 
         frappe.local.response["type"] = "redirect"
