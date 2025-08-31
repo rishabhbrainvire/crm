@@ -84,23 +84,6 @@
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
-  },
-  {
-   "fieldname": "workspace_items_tab",
-   "fieldtype": "Tab Break",
-   "label": "Workspace Items"
-  },
-  {
-   "fieldname": "emails",
-   "fieldtype": "Table",
-   "label": "Emails",
-   "options": "Workspace Email Table"
-  },
-  {
-   "fieldname": "events",
-   "fieldtype": "Table",
-   "label": "Events ",
-   "options": "Workspace Event Table"
   }
  ],
  "image_field": "organization_logo",

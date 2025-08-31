@@ -1,8 +1,7 @@
 import requests
 import frappe
-from datetime import datetime, timezone
+from datetime import datetime
 import html
-
 import requests
 import frappe
 from datetime import datetime
@@ -16,13 +15,13 @@ class GmailSync:
     def __init__(self, user, access_token):
         self.user = user
 
-        # Get or create Gmail Integration Account doc
-        doc_list = frappe.get_all("Gmail Integration Account", filters={"user": user}, limit=1)
+        # Get or create GW Gmail Account doc
+        doc_list = frappe.get_all("GW Gmail Account", filters={"user": user}, limit=1)
         if doc_list:
-            self.doc = frappe.get_doc("Gmail Integration Account" ,doc_list[0].name)
+            self.doc = frappe.get_doc("GW Gmail Account" ,doc_list[0].name)
         else:
             self.doc = frappe.get_doc({
-                "doctype": "Gmail Integration Account",
+                "doctype": "GW Gmail Account",
                 "user": user,
                 "sync_token": None,
                 "history_id": None,
@@ -75,7 +74,7 @@ class GmailSync:
             self.doc.last_sync = datetime.now()
             self.doc.save(ignore_permissions=True)
             frappe.db.commit()
-            print("Gmail Integration Account doc saved.")
+            print("GW Gmail Account doc saved.")
 
     # ------------------------------
     # Fetch emails
@@ -223,7 +222,7 @@ class GmailSync:
 
         # Check if email already exists
         existing = frappe.get_all(
-            "Gmail Email",
+            "GW Gmail Mail",
             filters={
                 "user": self.user,
                 "google_message_id": message.get("id")
@@ -231,10 +230,10 @@ class GmailSync:
             limit=1
         )
         if existing:
-            return frappe.get_doc("Gmail Email", existing[0].name)
+            return frappe.get_doc("GW Gmail Mail", existing[0].name)
 
         doc = frappe.get_doc({
-            "doctype": "Gmail Email",
+            "doctype": "GW Gmail Mail",
             "user": self.user,
             "google_message_id": message.get("id"),
             "subject": self.clean_html_entities(header_map.get("Subject")),
@@ -259,7 +258,6 @@ class GmailSync:
 
         doc.insert(ignore_permissions=True)
         frappe.db.commit()
-        print("exiting the save logic now")
         return doc
 
     # ------------------------------

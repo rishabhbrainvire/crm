@@ -166,10 +166,8 @@ doc_events = {
 		"validate_reset_password": ["crm.api.demo.validate_reset_password"],
 	},
     
-    "Google Calendar Events": {
-        "after_insert": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
+    "GW Calendar Event": {
         "on_update": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
-        "after_save": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
     }
 }
 
@@ -179,9 +177,10 @@ doc_events = {
 # ---------------
 
 fixtures = [
-    {"doctype": "DocType", "filters": [["custom", "=", "1"]]}
+    {"doctype": "DocType", "filters": [["custom", "=", "1"]]},
+    {"doctype": "Custom Field", "filters": [["dt", "=", "User"]]},
+    {"doctype": "Property Setter", "filters": [["doc_type", "=", "User"]]}
 ]
-
 
 # Scheduled Tasks
 # ---------------

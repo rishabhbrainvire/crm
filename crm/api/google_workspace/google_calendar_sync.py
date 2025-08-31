@@ -3,7 +3,6 @@ import requests
 import datetime
 from datetime import datetime, timedelta
 import pytz
-from frappe.utils import get_datetime, now_datetime
 import json
 import uuid
 
@@ -11,8 +10,9 @@ class GoogleCalendarSync:
     TOKEN_URL = "https://oauth2.googleapis.com/token"
     BASE_URL = "https://www.googleapis.com/calendar/v3/calendars"
     # WEBHOOK_ENDPOINT = "/api/method/crm.google_calendar.webhook"  Update this
-    TOKEN_DOCTYPE = "Google Integration Account"
-    CALENDAR_DOCTYPE = "Google Calendar Account" 
+    TOKEN_DOCTYPE = "User GW Account"
+    CALENDAR_DOCTYPE = "GW Calendar Account" 
+
     # Centralized status options
     STATUS_NOT_SYNCED = "Not Synced"
     STATUS_SYNCING_CALENDAR = "Syncing Calendar Events"
@@ -93,7 +93,7 @@ class GoogleCalendarSync:
             return {"status":"sucess","message":f"Workspace Calendar Full Sync Complete - Fetched {len(events)} Items"}
     
     def get_events(self, calendar_id="primary"):
-        """Sync Google Calendar events. Works for first-time and incremental sync."""
+        """Sync GW Calendar Event. Works for first-time and incremental sync."""
         try:
             headers = {"Authorization": f"Bearer {self.access_token}"}
             url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
@@ -140,24 +140,24 @@ class GoogleCalendarSync:
         
     def save_events(self, events):
         """
-        Save Google Calendar events into the `Google Calendar Events` DocType.
+        Save GW Calendar Event into the `GW Calendar Event` DocType.
         """
         try:            
             for ev in events:
                 if ev.get("eventType") == "default": # TBD - handle this properly later
                     google_event_id = ev.get("id")
                     existing_event = frappe.get_all(
-                        "Google Calendar Events",
+                        "GW Calendar Event",
                         filters={"google_event_id": google_event_id, "user": self.user},
                         limit=1
                     )
                     doc = None
                     if existing_event:
-                        doc = frappe.get_doc("Google Calendar Events", existing_event[0].name)
+                        doc = frappe.get_doc("GW Calendar Event", existing_event[0].name)
                         print(doc)
                         print("fullevent",ev)
                     else:
-                        doc = frappe.new_doc("Google Calendar Events")
+                        doc = frappe.new_doc("GW Calendar Event")
                         doc.user = self.user
                         doc.google_event_id = google_event_id
 
@@ -298,4 +298,4 @@ class GoogleCalendarSync:
 from .workspace_items import process_workspace_item
 
 def calendar_event_handler_enqueue(doc,method):
-    process_workspace_item(docname=doc.name,event_doc=True)
+    process_workspace_item(doc,event_doc=True)

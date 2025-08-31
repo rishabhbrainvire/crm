@@ -2,21 +2,22 @@ import frappe
 
 frappe.flags.in_import = True
 
-CALENDAR_DOC = "Google Calendar Events"
-GMAIL_DOC = "Gmail Email"
+CALENDAR_DOC = "GW Calendar Event"
+GMAIL_DOC = "GW Gmail Mail"
 "Workspace Mail Table"
 "Workspace Event Table"
 IGNORE_DOMAINS = {'gmail.com','yahoo.com', 'hotmail.com', 'outlook.com', 'live.com','icloud.com', 'aol.com', 'protonmail.com', 'zoho.com', 'gmx.com', 'yandex.com'}
 IGNORE_ROLES = {'info', 'support', 'admin', 'contact', 'sales', 'help', 'team','no-reply', 'noreply', 'service', 'office', 'customerservice', 'webmaster'}
 
-def get_attendees_email_addr_from_gw_event(docname):
-    doc = frappe.get_doc(CALENDAR_DOC, docname)        
+def get_attendees_email_addr_from_gw_event(doc):
+    if isinstance(doc, str):  # already docname
+        doc = frappe.get_doc(CALENDAR_DOC, doc)
+    
     attendees_email = []
-
     if hasattr(doc, "attendees"):
         for attendee in doc.attendees:
             attendees_email.append(attendee.email)
-    
+
     return attendees_email
 
 def get_attendees_email_addr_from_gw_gmail(docname):
@@ -49,7 +50,7 @@ def get_or_create_organization(domain):
         
         return organization
 
-def create_workspace_item(user_email,workspace_item_doc):
+def create_workspace_item(user_email):
     # Ignore Invalid email
     if not user_email or '@' not in user_email:
         return None 
@@ -106,9 +107,9 @@ def process_workspace_item(workspace_item_docname,mail_doc=None,event_doc=None):
             email_addr_list = get_attendees_email_addr_from_gw_gmail(workspace_item_docname)
         
         for email_addr in email_addr_list:
-            create_workspace_item(email_addr,mail_doc,event_doc)
+            create_workspace_item(email_addr)
         
         for email_addr in email_addr_list:
-            associate_workspace_item(email_addr,mail_doc,event_doc)
+            associate_workspace_item(email_addr,mail_doc,event_doc=workspace_item_docname.name)
     except Exception as error:
         frappe.throw(error)

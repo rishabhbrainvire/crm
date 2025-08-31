@@ -10,6 +10,12 @@ bench restart
 # bench --site frappecrm.brainvire.net backup
 
 
+bench --site frappecrm.brainvire.net install-app erpnext
+bench --site frappecrm.brainvire.net install-app hrms
+bench --site frappecrm.brainvire.net install-app crm
+
+
+
 bench --site frappecrm.brainvire.net clear-queue
 bench --site frappecrm.brainvire.net purge-jobs
 bench restart

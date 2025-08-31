@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 @frappe.whitelist()
 def check_google_auth_connection(user):
     conn = frappe.db.get_value(
-        "Google Integration Account",
+        "User GW Account",
         {"user": user},
         ["access_token", "refresh_token"],
         as_dict=True
@@ -37,8 +37,8 @@ def google_oauth_callback(**kwargs):
 
 class GoogleAuth:
     """Handles Google OAuth tokens and credentials for a given user."""
-    DOMAIN_URL = "https://frappecrm.brainvire.net"
-    TOKEN_DOCTYPE = "Google Integration Account"
+    DOMAIN_URL = "http://localhost:8002"
+    TOKEN_DOCTYPE = "User GW Account"
     GOOGLE_CLIENT_ID = frappe.conf.get("google_client_id")
     GOOGLE_CLIENT_SECRET = frappe.conf.get("google_client_secret")
     GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -181,9 +181,9 @@ class GoogleAuth:
         
         # return GoogleAuth.save_tokens() instead #TBD 
         # Store tokens in Google Workspace Connection
-        existing = frappe.get_all("Google Integration Account", filters={"user": frappe.session.user}, limit=1)
+        existing = frappe.get_all("User GW Account", filters={"user": frappe.session.user}, limit=1)
         if existing:
-            conn_doc = frappe.get_doc("Google Integration Account", existing[0].name)
+            conn_doc = frappe.get_doc("User GW Account", existing[0].name)
             conn_doc.update({
                 "access_token": token_info["access_token"],
                 "refresh_token": token_info["refresh_token"],
@@ -195,7 +195,7 @@ class GoogleAuth:
             conn_doc.save(ignore_permissions=True)
         else:
             connection = frappe.get_doc({
-                "doctype": "Google Integration Account",
+                "doctype": "User GW Account",
                 "user": frappe.session.user,
                 "access_token": token_info["access_token"],
                 "refresh_token": token_info["refresh_token"],
