@@ -174,6 +174,14 @@ doc_events = {
 
 
 
+# Fixtures
+# ---------------
+
+fixtures = [
+    {"doctype": "DocType", "filters": [["custom", "=", "1"]]}
+]
+
+
 # Scheduled Tasks
 # ---------------
 

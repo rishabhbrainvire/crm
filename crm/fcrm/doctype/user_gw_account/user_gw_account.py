@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GoogleIntegrationAccount(Document):
+class UserGWAccount(Document):
 	pass

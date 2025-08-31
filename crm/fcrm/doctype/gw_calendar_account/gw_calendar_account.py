@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GoogleCalendarAccount(Document):
+class GWCalendarAccount(Document):
 	pass

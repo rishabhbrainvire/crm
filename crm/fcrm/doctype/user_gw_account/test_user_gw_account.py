@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestGoogleIntegrationAccount(IntegrationTestCase):
+class IntegrationTestUserGWAccount(IntegrationTestCase):
 	"""
-	Integration tests for GoogleIntegrationAccount.
+	Integration tests for UserGWAccount.
 	Use this class for testing interactions between multiple components.
 	"""
 

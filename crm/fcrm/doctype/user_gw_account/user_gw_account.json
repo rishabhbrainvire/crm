@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "autoincrement",
- "creation": "2025-08-24 17:25:10.093033",
+ "creation": "2025-08-31 18:25:09.171562",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -17,6 +17,12 @@
   "google_account"
  ],
  "fields": [
+  {
+   "fieldname": "connection_details_section",
+   "fieldtype": "Section Break",
+   "label": "Connection Details",
+   "read_only": 1
+  },
   {
    "fieldname": "user",
    "fieldtype": "Link",
@@ -57,12 +63,6 @@
    "options": "Not Synced\nSyncing...\nSynced"
   },
   {
-   "fieldname": "connection_details_section",
-   "fieldtype": "Section Break",
-   "label": "Connection Details",
-   "read_only": 1
-  },
-  {
    "fieldname": "token_expiry",
    "fieldtype": "Datetime",
    "label": "token expiry"
@@ -76,10 +76,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-24 17:25:10.093033",
+ "modified": "2025-08-31 18:25:09.171562",
  "modified_by": "Administrator",
  "module": "FCRM",
- "name": "Google Integration Account",
+ "name": "User GW Account",
  "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [

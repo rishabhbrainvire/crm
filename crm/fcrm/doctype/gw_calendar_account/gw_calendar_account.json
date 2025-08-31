@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "autoincrement",
- "creation": "2025-08-24 17:25:09.721432",
+ "creation": "2025-08-31 18:25:08.854748",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -26,6 +26,14 @@
    "fieldname": "section_break_f0uz",
    "fieldtype": "Section Break",
    "label": "Meta Details"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "user",
+   "options": "User",
+   "reqd": 1
   },
   {
    "fieldname": "calendar_id",
@@ -84,14 +92,6 @@
    "label": "created on"
   },
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "user",
-   "options": "User",
-   "reqd": 1
-  },
-  {
    "fieldname": "watch_channel_token",
    "fieldtype": "Data",
    "label": "watch channel token"
@@ -100,10 +100,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-24 21:19:38.831788",
- "modified_by": "rishabh.sharma@brainvire.com",
+ "modified": "2025-08-31 18:34:27.194631",
+ "modified_by": "Administrator",
  "module": "FCRM",
- "name": "Google Calendar Account",
+ "name": "GW Calendar Account",
  "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [

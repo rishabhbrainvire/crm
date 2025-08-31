@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestGoogleCalendarAccount(IntegrationTestCase):
+class IntegrationTestGWCalendarAccount(IntegrationTestCase):
 	"""
-	Integration tests for GoogleCalendarAccount.
+	Integration tests for GWCalendarAccount.
 	Use this class for testing interactions between multiple components.
 	"""
 
