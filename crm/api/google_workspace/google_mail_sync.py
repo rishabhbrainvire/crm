@@ -7,6 +7,8 @@ import frappe
 from datetime import datetime
 import html
 
+from .workspace_items import GWI_provisioning_in_batches
+
 class GmailSync:
     GMAIL_API_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
     HISTORY_API_URL = "https://gmail.googleapis.com/gmail/v1/users/me/history"
@@ -271,14 +273,20 @@ class GmailSync:
             print("No new messages to sync.")
             return 0
 
+        saved_mail_docnames = []
+
         count = 0
         for msg in messages:
             detail = self.fetch_message_detail(msg["id"])
             doc = self.save_email_to_doctype(detail)
             if doc:
+                saved_mail_docnames.append(doc.name)
                 count += 1
+            
 
         print(f"Email sync completed. Total messages processed: {len(messages)}, saved: {count}")
+
+        GWI_provisioning_in_batches(docnames=saved_mail_docnames,is_mail=True)
         return count
 
 

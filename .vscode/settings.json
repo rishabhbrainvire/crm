@@ -14,5 +14,33 @@
             "username": "root",
             "password": "123"
         }
-    ]
+    ],
+
+    "python.analysis.include": ["src", "app"],          // adjust to your code dirs
+    "python.analysis.exclude": [
+        "**/.venv/**",
+        "**/.git/**",
+        "**/build/**",
+        "**/dist/**",
+        "**/.mypy_cache/**",
+        "**/.pytest_cache/**",
+        "**/data/**",
+        "**/node_modules/**"
+    ],
+     // Turn off expensive features
+    "python.analysis.indexing": false,
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.autoImportCompletions": false,
+
+    // Also reduce file watching overhead
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/node_modules/**": true,
+        "**/build/**": true,
+        "**/dist/**": true
+  }
+
+
+
+
 }

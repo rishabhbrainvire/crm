@@ -1,10 +1,6 @@
-import frappe
-import requests
-import datetime
-from datetime import datetime, timedelta
-import pytz
-import json
-import uuid
+import frappe ,pytz , json , uuid, requests
+from datetime import datetime
+from .workspace_items import GWI_provisioning, GWI_provisioning_in_batches
 
 class GoogleCalendarSync:
     TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -80,8 +76,20 @@ class GoogleCalendarSync:
         # self.set_sync_status(self.STATUS_SYNCING_CALENDAR)
         try:
             frappe.log(f"Workspace Calendar Sync Starting ... ")
+
+            # Get events 
             events = self.get_events()
-            self.save_events(events) 
+            print(f"Got {len(events)} calendar events "  )
+
+            # Save events
+            saved_events_docnames = self.save_events(events)
+            print(f"Saved {len(events)} calendar events "  )
+
+            # Process provisioning on events (enqueue later)
+            print(f"Provisioning {len(events)} calendar events now... "  )
+            GWI_provisioning_in_batches(saved_events_docnames,is_event=True)
+            
+
         except Exception as error:
             frappe.throw("Calendar Full Sync Failed")
             frappe.frappe.log_error(title="Calendar Full Sync Failed", message=f"{str(error)}\n\nTraceback:\n{frappe.get_traceback()}")
@@ -103,17 +111,23 @@ class GoogleCalendarSync:
 
             # Check if we already have a stored sync token
             last_sync_token = self.sync_token
+            bulk = None
 
             if last_sync_token:
                 # Incremental sync (Google only returns changes)
                 params["syncToken"] = last_sync_token
                 print(f"🔄 Incremental sync with token: {last_sync_token}")
+                bulk=False
             else:
                 # First-time sync — must be full list, no filters
                 params["singleEvents"] = True
                 params["showDeleted"] = True
                 params["singleEvents"]=True
                 print("🌱 First-time sync (fetching all events)")
+                bulk = True
+
+
+                # call a single function which will decide , if bulk comes in it will enqueue all the jobs, else call the proess ligc directly
 
             while True:
                 res = requests.get(url, headers=headers, params=params)
@@ -142,16 +156,21 @@ class GoogleCalendarSync:
         """
         Save GW Calendar Event into the `GW Calendar Event` DocType.
         """
-        try:            
+        try: 
+            saved_events = []
             for ev in events:
                 if ev.get("eventType") == "default": # TBD - handle this properly later
+                    
                     google_event_id = ev.get("id")
+
                     existing_event = frappe.get_all(
                         "GW Calendar Event",
                         filters={"google_event_id": google_event_id, "user": self.user},
                         limit=1
                     )
+
                     doc = None
+
                     if existing_event:
                         doc = frappe.get_doc("GW Calendar Event", existing_event[0].name)
                         print(doc)
@@ -173,11 +192,11 @@ class GoogleCalendarSync:
                     doc.updated_on = self._parse_google_datetime(ev.get("updated"))
                     doc.etag = ev.get("etag")
                     doc.recurring_event_id = ev.get("recurringEventId")
-                    print(doc.summary,'summary')
-                    # Handle attendees table
+                    
+                    #  Handle attendees table
                     doc.attendees = []
-
                     attendees = ev.get("attendees", [])
+
                     if attendees:
                         for attendee in attendees:
                             email = attendee.get("email")
@@ -187,14 +206,19 @@ class GoogleCalendarSync:
                                 "display_name": attendee.get("displayName"),
                                 "self": 1 if attendee.get("self") else 0 
                             })
+
                     doc.save(ignore_permissions=True)
+                    saved_events.append(doc.name)
+
             frappe.db.commit()
+            
         except Exception as err:
             frappe.throw(str(err))
             # self.set_sync_status(status=self.STATUS_FAILED)
         else:
             # self.set_sync_status(status=self.STATUS_SYNCED)
-            return True
+            return saved_events
+        
 
     def register_watch(self, calendar_id: str = "primary", ) -> dict:
         try:
@@ -284,18 +308,3 @@ class GoogleCalendarSync:
         """Detect if the event is an all-day event."""
         return bool(dt_obj and "date" in dt_obj)
 
-    @staticmethod
-    def _run_incremental_sync(user: str,access_token):
-        sync_instance = GoogleCalendarSync(user,access_token)
-
-        try:
-            processed = GoogleCalendarSync.get_events(user, "primary")
-            frappe.logger("google_calendar").info(f"Incremental sync for {user}: {processed} items")
-        except Exception:
-            frappe.log_error(frappe.get_traceback(), f"Google Calendar incremental sync failed for {user}")
-    
-
-from .workspace_items import process_workspace_item
-
-def calendar_event_handler_enqueue(doc,method):
-    process_workspace_item(doc,event_doc=True)

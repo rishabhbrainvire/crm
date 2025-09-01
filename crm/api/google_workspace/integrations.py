@@ -32,7 +32,7 @@ class GoogleWorkspaceIntegration:
 
     def initial_setup(self):
         self.calendar_sync_setup()
-        # self.gmail.sync_emails()
+        self.gmail.sync_emails()
 
     def calendar_sync_setup(self):
         self.calendar.sync_events()

@@ -166,9 +166,9 @@ doc_events = {
 		"validate_reset_password": ["crm.api.demo.validate_reset_password"],
 	},
     
-    "GW Calendar Event": {
-        "on_update": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
-    }
+    # "GW Calendar Event": {
+    #     "on_update": "crm.api.google_workspace.google_calendar_sync.calendar_event_handler_enqueue",
+    # }
 }
 
 
