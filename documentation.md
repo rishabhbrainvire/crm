@@ -41,3 +41,6 @@ bench --site frappecrm.brainvire.net --force reinstall
 
 
 bench --site frappecrm.brainvire.net rename-doctype "User GW Gmail Child Table" "User GW Gmail Account"
+
+
+## Create a Webpage
